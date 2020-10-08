@@ -1343,7 +1343,7 @@ bool cPVRClientArgusTV::_OpenLiveStream(const kodi::addon::PVRChannel& channelin
     // TODO: rtsp support
     m_tsreader = new CTsReader();
     kodi::Log(ADDON_LOG_DEBUG, "Open TsReader");
-    m_tsreader->Open(filename.c_str());
+    m_tsreader->Open(filename);
     m_tsreader->OnZap();
     kodi::Log(ADDON_LOG_DEBUG, "Delaying %ld milliseconds.", m_base.GetSettings().TuneDelay());
     std::this_thread::sleep_for(std::chrono::milliseconds(m_base.GetSettings().TuneDelay()));
@@ -1573,7 +1573,7 @@ bool cPVRClientArgusTV::OpenRecordedStream(const kodi::addon::PVRRecording& reci
     SafeDelete(m_tsreader);
   }
   m_tsreader = new CTsReader();
-  if (!m_tsreader->Open(UNCname.c_str()))
+  if (!m_tsreader->Open(UNCname))
   {
     SafeDelete(m_tsreader);
     return false;

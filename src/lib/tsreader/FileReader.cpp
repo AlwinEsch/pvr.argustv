@@ -78,7 +78,7 @@ bool FileReader::OpenFile()
     }
 
     // Is this still needed on Windows?
-    //CStdStringW strWFile = UTF8Util::ConvertUTF8ToUTF16(m_fileName.c_str());
+    //CStdStringW strWFile = UTF8Util::ConvertUTF8ToUTF16(m_fileName);
     std::this_thread::sleep_for(std::chrono::milliseconds(20));
   } while (--Tmo);
 

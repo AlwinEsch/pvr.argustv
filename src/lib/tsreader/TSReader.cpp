@@ -66,7 +66,7 @@ bool CTsReader::Open(const std::string& fileName)
   }
 
   //open file
-  if (m_fileReader->SetFileName(m_fileName.c_str()) != true)
+  if (m_fileReader->SetFileName(m_fileName) != true)
   {
     kodi::Log(ADDON_LOG_ERROR, "CTsReader::SetFileName failed.");
     return false;

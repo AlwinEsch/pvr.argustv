@@ -225,7 +225,7 @@ bool MultiFileReader::Read(unsigned char* pbData,
     if (m_TSFileId != file->filePositionId)
     {
       m_TSFile.CloseFile();
-      m_TSFile.SetFileName(file->filename.c_str());
+      m_TSFile.SetFileName(file->filename);
       m_TSFile.OpenFile();
 
       m_TSFileId = file->filePositionId;
@@ -459,7 +459,7 @@ bool MultiFileReader::RefreshTSBufferFile()
       {
         // If we're adding files the changes are the one at the back has a partial length
         // so we need update it.
-        GetFileLength(file->filename.c_str(), file->length);
+        GetFileLength(file->filename, file->length);
       }
 
       nextStartPosition = file->startPosition + file->length;
