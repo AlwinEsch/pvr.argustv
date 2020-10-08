@@ -866,6 +866,19 @@ PVR_ERROR cPVRClientArgusTV::SetRecordingPlayCount(const kodi::addon::PVRRecordi
   return PVR_ERROR_NO_ERROR;
 }
 
+PVR_ERROR cPVRClientArgusTV::GetRecordingStreamProperties(
+      const kodi::addon::PVRRecording& recinfo,
+      std::vector<kodi::addon::PVRStreamProperty>& properties)
+{
+  properties.emplace_back(PVR_STREAM_PROPERTY_INPUTSTREAM, "pvr.argustv");
+  properties.emplace_back(PVR_STREAM_PROPERTY_INPUTSTREAM_INSTANCE_ID, "recording");
+  properties.emplace_back(PVR_STREAM_PROPERTY_ISREALTIMESTREAM, "false");
+  properties.emplace_back("pvr.argustv.process_class",
+                          std::to_string(reinterpret_cast<uint64_t>(this)));
+  properties.emplace_back("pvr.argustv.recording_id", recinfo.GetRecordingId());
+  return PVR_ERROR_NO_ERROR;
+}
+
 
 /************************************************************/
 /** Timer handling */
@@ -1325,83 +1338,3 @@ bool cPVRClientArgusTV::FindRecEntry(const std::string& recId, std::string& recE
   return !recEntryURL.empty();
 }
 
-/************************************************************/
-/** Record stream handling */
-bool cPVRClientArgusTV::OpenRecordedStream(const kodi::addon::PVRRecording& recinfo)
-{
-  std::string UNCname;
-
-  if (!FindRecEntry(recinfo.GetRecordingId(), UNCname))
-    return false;
-
-  kodi::Log(ADDON_LOG_DEBUG, "->OpenRecordedStream(%s)", UNCname.c_str());
-
-  if (m_tsreader != nullptr)
-  {
-    kodi::Log(ADDON_LOG_DEBUG, "Close existing TsReader...");
-    m_tsreader->Close();
-    SafeDelete(m_tsreader);
-  }
-  m_tsreader = new CTsReader();
-  if (!m_tsreader->Open(UNCname))
-  {
-    SafeDelete(m_tsreader);
-    return false;
-  }
-
-  m_bRecordingPlayback = true;
-
-  return true;
-}
-
-void cPVRClientArgusTV::CloseRecordedStream(void)
-{
-  kodi::Log(ADDON_LOG_DEBUG, "->CloseRecordedStream()");
-
-  m_bRecordingPlayback = false;
-
-  if (m_tsreader)
-  {
-    kodi::Log(ADDON_LOG_DEBUG, "Close TsReader");
-    m_tsreader->Close();
-    SafeDelete(m_tsreader);
-  }
-}
-
-int cPVRClientArgusTV::ReadRecordedStream(unsigned char* pBuffer, unsigned int iBuffersize)
-{
-  unsigned long read_done = 0;
-
-  // kodi::Log(ADDON_LOG_DEBUG, "->ReadRecordedStream(buf_size=%i)", iBufferSize);
-  if (!m_tsreader)
-    return -1;
-
-  if (!m_tsreader->Read(pBuffer, iBuffersize, &read_done))
-  {
-    kodi::Log(ADDON_LOG_INFO, "ReadRecordedStream requested %d but only read %d bytes.",
-              iBuffersize, read_done);
-  }
-  return read_done;
-}
-
-int64_t cPVRClientArgusTV::SeekRecordedStream(int64_t iPosition, int iWhence)
-{
-  if (!m_tsreader)
-  {
-    return -1;
-  }
-  if (iPosition == 0 && iWhence == SEEK_CUR)
-  {
-    return m_tsreader->GetFilePointer();
-  }
-  return m_tsreader->SetFilePointer(iPosition, iWhence);
-}
-
-int64_t cPVRClientArgusTV::LengthRecordedStream(void)
-{
-  if (!m_tsreader)
-  {
-    return -1;
-  }
-  return m_tsreader->GetFileSize();
-}

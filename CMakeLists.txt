@@ -22,6 +22,7 @@ set(ARGUSTV_SOURCES src/activerecording.cpp
                     src/recordinggroup.cpp
                     src/settings.cpp
                     src/stream_live.cpp
+                    src/stream_recording.cpp
                     src/tools.cpp
                     src/upcomingrecording.cpp
                     src/uri.cpp
@@ -41,6 +42,7 @@ set(ARGUSTV_HEADERS src/activerecording.h
                     src/recordinggroup.h
                     src/settings.h
                     src/stream_live.h
+                    src/stream_recording.h
                     src/tools.h
                     src/upcomingrecording.h
                     src/uri.h

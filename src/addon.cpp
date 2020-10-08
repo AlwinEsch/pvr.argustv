@@ -10,6 +10,7 @@
 
 #include "pvrclient-argustv.h"
 #include "stream_live.h"
+#include "stream_recording.h"
 
 ADDON_STATUS CArgusTVAddon::CreateInstance(int instanceType,
                                            const std::string& instanceID,
@@ -44,6 +45,11 @@ ADDON_STATUS CArgusTVAddon::CreateInstance(int instanceType,
     if (instanceID == "tv")
     {
       addonInstance = new CStreamLive(*this, instance, version);
+      curStatus = ADDON_STATUS_OK;
+    }
+    else if (instanceID == "recording")
+    {
+      addonInstance = new CStreamRecording(*this, instance, version);
       curStatus = ADDON_STATUS_OK;
     }
   }

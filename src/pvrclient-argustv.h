@@ -78,6 +78,9 @@ public:
   PVR_ERROR GetRecordingLastPlayedPosition(const kodi::addon::PVRRecording& recording,
                                            int& position) override;
   PVR_ERROR SetRecordingPlayCount(const kodi::addon::PVRRecording& recinfo, int playcount) override;
+  PVR_ERROR GetRecordingStreamProperties(
+      const kodi::addon::PVRRecording& recinfo,
+      std::vector<kodi::addon::PVRStreamProperty>& properties) override;
 
   /* Timer handling */
   PVR_ERROR GetTimersAmount(int& amount) override;
@@ -89,24 +92,16 @@ public:
   /* Live stream handling */
   PVR_ERROR GetSignalStatus(int channelUid, kodi::addon::PVRSignalStatus& signalStatus) override;
 
-  /* Record stream handling */
-  bool OpenRecordedStream(const kodi::addon::PVRRecording& recording) override;
-  void CloseRecordedStream() override;
-  int ReadRecordedStream(unsigned char* pBuffer, unsigned int iBufferSize) override;
-  int64_t SeekRecordedStream(int64_t iPosition, int iWhence) override;
-  int64_t LengthRecordedStream() override;
-
   CArgusTV& GetRPC() { return m_rpc; }
   cChannel* FetchChannel(int channelid, bool LogError = true);
+  bool FindRecEntry(const std::string& recId, std::string& recEntryURL);
   CKeepAliveThread* KeepAlive() { return m_keepalive; }
   void ResetSignalQuality() { m_signalqualityInterval = 0; }
 
 private:
   cChannel* FetchChannel(std::vector<cChannel*> m_Channels, int channelid, bool LogError = true);
   void FreeChannels(std::vector<cChannel*> m_Channels);
-  void Close();
   bool FindRecEntryUNC(const std::string& recId, std::string& recEntryURL);
-  bool FindRecEntry(const std::string& recId, std::string& recEntryURL);
 
   int m_iCurrentChannel = -1;
   bool m_bConnected = false;
