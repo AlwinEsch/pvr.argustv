@@ -58,6 +58,10 @@ public:
   /* Channel handling */
   PVR_ERROR GetChannelsAmount(int& amount) override;
   PVR_ERROR GetChannels(bool radio, kodi::addon::PVRChannelsResultSet& results) override;
+  PVR_ERROR GetChannelStreamProperties(
+      const kodi::addon::PVRChannel& channel,
+      std::vector<kodi::addon::PVRStreamProperty>& properties) override;
+
   /* Channel group handling */
   PVR_ERROR GetChannelGroupsAmount(int& amount) override;
   PVR_ERROR GetChannelGroups(bool radio, kodi::addon::PVRChannelGroupsResultSet& results) override;
@@ -83,15 +87,7 @@ public:
   PVR_ERROR UpdateTimer(const kodi::addon::PVRTimer& timer) override;
 
   /* Live stream handling */
-  bool OpenLiveStream(const kodi::addon::PVRChannel& channel) override;
-  void CloseLiveStream() override;
-  int ReadLiveStream(unsigned char* pBuffer, unsigned int iBufferSize) override;
-  int64_t SeekLiveStream(int64_t pos, int whence) override;
-  int64_t LengthLiveStream() override;
   PVR_ERROR GetSignalStatus(int channelUid, kodi::addon::PVRSignalStatus& signalStatus) override;
-  bool CanSeekStream() override;
-  bool CanPauseStream() override;
-  bool IsRealTimeStream() override { return !m_bRecordingPlayback; }
 
   /* Record stream handling */
   bool OpenRecordedStream(const kodi::addon::PVRRecording& recording) override;
@@ -100,24 +96,21 @@ public:
   int64_t SeekRecordedStream(int64_t iPosition, int iWhence) override;
   int64_t LengthRecordedStream() override;
 
-  /* Used for rtsp streaming */
-  const char* GetLiveStreamURL(const kodi::addon::PVRChannel& channel);
-
   CArgusTV& GetRPC() { return m_rpc; }
+  cChannel* FetchChannel(int channelid, bool LogError = true);
+  CKeepAliveThread* KeepAlive() { return m_keepalive; }
+  void ResetSignalQuality() { m_signalqualityInterval = 0; }
 
 private:
-  cChannel* FetchChannel(int channelid, bool LogError = true);
   cChannel* FetchChannel(std::vector<cChannel*> m_Channels, int channelid, bool LogError = true);
   void FreeChannels(std::vector<cChannel*> m_Channels);
   void Close();
-  bool _OpenLiveStream(const kodi::addon::PVRChannel& channel);
   bool FindRecEntryUNC(const std::string& recId, std::string& recEntryURL);
   bool FindRecEntry(const std::string& recId, std::string& recEntryURL);
 
   int m_iCurrentChannel = -1;
   bool m_bConnected = false;
   bool m_bTimeShiftStarted = false;
-  std::string m_PlaybackURL;
   int m_iBackendVersion = 0;
   std::string m_sBackendVersion;
   time_t m_BackendUTCoffset = 0;

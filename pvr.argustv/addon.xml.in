@@ -8,6 +8,10 @@
   <extension
     point="kodi.pvrclient"
     library_@PLATFORM@="@LIBRARY_FILENAME@"/>
+  <extension
+    point="kodi.inputstream"
+    name="pvr.argustv"
+    listitemprops="process_class|channel_unique_id" />
   <extension point="xbmc.addon.metadata">
     <summary lang="af_ZA">Kodi voorprogram vir die ARGUS TV PVR http://www.argus-tv.com//</summary>
     <summary lang="be_BY">Інтэрфейс Kodi для ARGUS TV PVR http://www.argus-tv.com//</summary>

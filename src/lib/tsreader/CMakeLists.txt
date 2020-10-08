@@ -24,4 +24,3 @@ set_target_properties(tsreader PROPERTIES
     VISIBILITY_INLINES_HIDDEN YES
     POSITION_INDEPENDENT_CODE ON
 )
-

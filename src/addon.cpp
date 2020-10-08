@@ -9,6 +9,7 @@
 #include "addon.h"
 
 #include "pvrclient-argustv.h"
+#include "stream_live.h"
 
 ADDON_STATUS CArgusTVAddon::CreateInstance(int instanceType,
                                            const std::string& instanceID,
@@ -38,6 +39,14 @@ ADDON_STATUS CArgusTVAddon::CreateInstance(int instanceType,
     addonInstance = client;
     m_usedInstances.emplace(std::make_pair(instanceID, client));
   }
+  else if (instanceType == ADDON_INSTANCE_INPUTSTREAM)
+  {
+    if (instanceID == "tv")
+    {
+      addonInstance = new CStreamLive(*this, instance, version);
+      curStatus = ADDON_STATUS_OK;
+    }
+  }
 
   return curStatus;
 }
@@ -60,7 +69,8 @@ ADDON_STATUS CArgusTVAddon::SetSetting(const std::string& settingName,
   return m_settings.SetSetting(settingName, settingValue);
 }
 
-#pragma GCC visibility push(default) // Temp workaround, this becomes later added to kodi-dev-kit system
+#pragma GCC visibility push( \
+    default) // Temp workaround, this becomes later added to kodi-dev-kit system
 ADDONCREATOR(CArgusTVAddon)
 #pragma GCC visibility pop
 

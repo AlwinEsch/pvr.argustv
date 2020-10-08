@@ -299,7 +299,7 @@ bool MultiFileReader::RefreshTSBufferFile()
   unsigned long bytesRead;
   MultiFileReaderFile* file;
 
-  long result;
+  bool result;
   int64_t currentPosition;
   int32_t filesAdded, filesRemoved;
   int32_t filesAdded2, filesRemoved2;
@@ -307,6 +307,7 @@ bool MultiFileReader::RefreshTSBufferFile()
   long Loop = 10;
 
   wchar_t* pBuffer = nullptr;
+  unsigned long bufferLength = 0;
   do
   {
     Error = 0;
@@ -362,8 +363,8 @@ bool MultiFileReader::RefreshTSBufferFile()
 
     pBuffer = (wchar_t*)new char[(unsigned int)remainingLength];
 
-    result = m_TSBufferFile.Read((unsigned char*)pBuffer, (uint32_t)remainingLength, &bytesRead);
-    if (!result || (int64_t)bytesRead != remainingLength)
+    result = m_TSBufferFile.Read((unsigned char*)pBuffer, (uint32_t)remainingLength, &bufferLength);
+    if (!result || (int64_t)bufferLength != remainingLength)
       Error |= 0x20;
 
     readLength = sizeof(filesAdded) + sizeof(filesRemoved);
@@ -402,7 +403,10 @@ bool MultiFileReader::RefreshTSBufferFile()
     }
 
     if (Error)
+    {
       delete[] pBuffer;
+      pBuffer = nullptr;
+    }
 
     Loop--;
   } while (Error && Loop); // If Error is set, try again...until Loop reaches 0.
@@ -478,16 +482,16 @@ bool MultiFileReader::RefreshTSBufferFile()
     // Create a list of files in the .tsbuffer file.
     std::vector<std::string> filenames;
 
-    wchar_t* pwCurrFile = pBuffer; //Get a pointer to the first wchar filename string in pBuffer
-    long length = WcsLen(pwCurrFile);
+    long length = WcsLen(pBuffer);
 
     //kodi::Log(ADDON_LOG_DEBUG, "%s: WcsLen(%d), sizeof(wchar_t) == %d.", __FUNCTION__, length, sizeof(wchar_t));
 
-    while (length > 0)
+    size_t ptr = 0;
+    while (length > 0 && ptr <= bufferLength / sizeof(wchar_t))
     {
       // Convert the current filename (wchar to normal char)
-      char* wide2normal = new char[length + 1];
-      WcsToMbs(wide2normal, pwCurrFile, length);
+      char* wide2normal = new char[length + 1]();
+      WcsToMbs(wide2normal, pBuffer + ptr, length);
       wide2normal[length] = '\0';
 
       //unsigned char* pb = (unsigned char*) wide2normal;
@@ -503,7 +507,7 @@ bool MultiFileReader::RefreshTSBufferFile()
       // Modify filename path here to include the real (local) path
       pos = sCurrFile.find_last_of(92);
       std::string name = sCurrFile.substr(pos + 1);
-      if (path.length() > 0 && name.length() > 0)
+      if (!path.empty() && !name.empty())
       {
         // Replace the original path with our local path
         filenames.push_back(path + name);
@@ -515,8 +519,8 @@ bool MultiFileReader::RefreshTSBufferFile()
       }
 
       // Move the wchar buffer pointer to the next wchar string
-      pwCurrFile += (length + 1);
-      length = WcsLen(pwCurrFile);
+      ptr += (length + 1);
+      length = WcsLen(pBuffer + ptr);
     }
 
     // Go through files
