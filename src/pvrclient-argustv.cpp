@@ -1384,8 +1384,7 @@ int cPVRClientArgusTV::ReadLiveStream(unsigned char* pBuffer, unsigned int iBuff
   {
     read_wanted = iBufferSize - read_done;
 
-    long lRc = 0;
-    if ((lRc = m_tsreader->Read(bufptr, read_wanted, &read_wanted)) > 0)
+    if (!m_tsreader->Read(bufptr, read_wanted, &read_wanted))
     {
       std::this_thread::sleep_for(std::chrono::milliseconds(400));
       read_timeouts++;
@@ -1574,7 +1573,7 @@ bool cPVRClientArgusTV::OpenRecordedStream(const kodi::addon::PVRRecording& reci
     SafeDelete(m_tsreader);
   }
   m_tsreader = new CTsReader();
-  if (m_tsreader->Open(UNCname.c_str()) != S_OK)
+  if (!m_tsreader->Open(UNCname.c_str()))
   {
     SafeDelete(m_tsreader);
     return false;
@@ -1607,8 +1606,7 @@ int cPVRClientArgusTV::ReadRecordedStream(unsigned char* pBuffer, unsigned int i
   if (!m_tsreader)
     return -1;
 
-  long lRc = 0;
-  if ((lRc = m_tsreader->Read(pBuffer, iBuffersize, &read_done)) > 0)
+  if (!m_tsreader->Read(pBuffer, iBuffersize, &read_done))
   {
     kodi::Log(ADDON_LOG_INFO, "ReadRecordedStream requested %d but only read %d bytes.",
               iBuffersize, read_done);

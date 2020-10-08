@@ -38,10 +38,10 @@ std::string FileReader::GetFileName() const
   return m_fileName;
 }
 
-long FileReader::SetFileName(const std::string& fileName)
+bool FileReader::SetFileName(const std::string& fileName)
 {
   m_fileName = fileName;
-  return S_OK;
+  return true;
 }
 
 //
@@ -49,7 +49,7 @@ long FileReader::SetFileName(const std::string& fileName)
 //
 // Opens the file ready for streaming
 //
-long FileReader::OpenFile()
+bool FileReader::OpenFile()
 {
   int Tmo = 25; //5 in MediaPortal
 
@@ -57,14 +57,14 @@ long FileReader::OpenFile()
   if (!IsFileInvalid())
   {
     kodi::Log(ADDON_LOG_INFO, "FileReader::OpenFile() file already open");
-    return S_OK;
+    return true;
   }
 
   // Has a filename been set yet
   if (m_fileName.empty())
   {
     kodi::Log(ADDON_LOG_ERROR, "FileReader::OpenFile() no filename");
-    return ERROR_INVALID_NAME;
+    return false;
   }
 
   kodi::Log(ADDON_LOG_DEBUG, "FileReader::OpenFile() Trying to open %s", m_fileName.c_str());
@@ -92,12 +92,12 @@ long FileReader::OpenFile()
   else
   {
     kodi::Log(ADDON_LOG_ERROR, "FileReader::OpenFile(), open file %s failed.", m_fileName.c_str());
-    return S_FALSE;
+    return false;
   }
 
   kodi::Log(ADDON_LOG_DEBUG, "%s: OpenFile(%s) succeeded.", __FUNCTION__, m_fileName.c_str());
 
-  return S_OK;
+  return true;
 
 } // Open
 
@@ -106,16 +106,16 @@ long FileReader::OpenFile()
 //
 // Closes any dump file we have opened
 //
-long FileReader::CloseFile()
+bool FileReader::CloseFile()
 {
   if (IsFileInvalid())
   {
-    return S_OK;
+    return true;
   }
 
   m_file.Close();
 
-  return S_OK;
+  return true;
 } // CloseFile
 
 bool FileReader::IsFileInvalid()
@@ -138,7 +138,7 @@ int64_t FileReader::GetFilePointer()
 }
 
 
-long FileReader::Read(unsigned char* pbData, unsigned long lDataLength, unsigned long* dwReadBytes)
+bool FileReader::Read(unsigned char* pbData, unsigned long lDataLength, unsigned long* dwReadBytes)
 {
   *dwReadBytes = m_file.Read((void*)pbData, lDataLength); //Read file data into buffer
   //kodi::Log(ADDON_LOG_DEBUG, "%s: requested read length %d actually read %d.", __FUNCTION__, lDataLength, *dwReadBytes);
@@ -146,9 +146,9 @@ long FileReader::Read(unsigned char* pbData, unsigned long lDataLength, unsigned
   if (*dwReadBytes < lDataLength)
   {
     kodi::Log(ADDON_LOG_DEBUG, "FileReader::Read() read too less bytes");
-    return S_FALSE;
+    return false;
   }
-  return S_OK;
+  return true;
 }
 
 void FileReader::SetDebugOutput(bool bDebugOutput)
@@ -163,6 +163,6 @@ int64_t FileReader::GetFileSize()
 
 void FileReader::OnZap(void)
 {
-  SetFilePointer(0, FILE_END);
+  SetFilePointer(0, SEEK_END);
 }
 } // namespace ArgusTV

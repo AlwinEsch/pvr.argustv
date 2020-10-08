@@ -29,8 +29,8 @@ class CTsReader
 public:
   CTsReader();
   ~CTsReader(void) = default;
-  long Open(const std::string& fileName);
-  long Read(unsigned char* pbData, unsigned long lDataLength, unsigned long* dwReadBytes);
+  bool Open(const std::string& fileName);
+  bool Read(unsigned char* pbData, unsigned long lDataLength, unsigned long* dwReadBytes);
   void Close();
   int64_t SetFilePointer(int64_t llDistanceToMove, unsigned long dwMoveMethod);
   int64_t GetFileSize();

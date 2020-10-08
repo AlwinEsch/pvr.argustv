@@ -27,9 +27,6 @@
 #include <stdio.h>
 #include <sys/stat.h>
 
-#include "lib/tsreader/platform.h"
-
-
 // Some version dependent API strings
 #define ATV_GETEPG_45 \
   "ArgusTV/Guide/FullPrograms/%s/%i-%02i-%02iT%02i:%02i:%02i/%i-%02i-%02iT%02i:%02i:%02i/false"

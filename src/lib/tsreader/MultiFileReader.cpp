@@ -57,7 +57,7 @@ std::string MultiFileReader::GetFileName() const
   return m_TSBufferFile.GetFileName();
 }
 
-long MultiFileReader::SetFileName(const std::string& fileName)
+bool MultiFileReader::SetFileName(const std::string& fileName)
 {
   return m_TSBufferFile.SetFileName(fileName);
 }
@@ -65,7 +65,7 @@ long MultiFileReader::SetFileName(const std::string& fileName)
 //
 // OpenFile
 //
-long MultiFileReader::OpenFile()
+bool MultiFileReader::OpenFile()
 {
   std::string bufferfilename = m_TSBufferFile.GetFileName();
 
@@ -74,7 +74,7 @@ long MultiFileReader::OpenFile()
   {
     kodi::Log(ADDON_LOG_ERROR, "MultiFileReader: can not get stat from buffer file %s.",
               bufferfilename.c_str());
-    return S_FALSE;
+    return false;
   }
 
   int64_t fileLength = stat.GetSize();
@@ -100,7 +100,7 @@ long MultiFileReader::OpenFile()
 
   long hr = m_TSBufferFile.OpenFile();
 
-  if (RefreshTSBufferFile() == S_FALSE)
+  if (RefreshTSBufferFile() == false)
   {
     // For radio the buffer sometimes needs some time to become available, so wait and try it more than once
     kodi::tools::CEndTime timeout(MAX_BUFFER_TIMEOUT);
@@ -113,9 +113,9 @@ long MultiFileReader::OpenFile()
         kodi::Log(ADDON_LOG_ERROR,
                   "MultiFileReader: timed out while waiting for buffer file to become available");
         kodi::QueueNotification(QUEUE_ERROR, "", "Time out while waiting for buffer file");
-        return S_FALSE;
+        return false;
       }
-    } while (RefreshTSBufferFile() == S_FALSE);
+    } while (RefreshTSBufferFile() == false);
   }
 
   m_currentReadPosition = 0;
@@ -126,7 +126,7 @@ long MultiFileReader::OpenFile()
 //
 // CloseFile
 //
-long MultiFileReader::CloseFile()
+bool MultiFileReader::CloseFile()
 {
   long hr;
   hr = m_TSBufferFile.CloseFile();
@@ -149,15 +149,15 @@ int64_t MultiFileReader::SetFilePointer(int64_t llDistanceToMove, unsigned long 
 {
   RefreshTSBufferFile();
 
-  if (dwMoveMethod == FILE_END)
+  if (dwMoveMethod == SEEK_END)
   {
     m_currentReadPosition = m_endPosition + llDistanceToMove;
   }
-  else if (dwMoveMethod == FILE_CURRENT)
+  else if (dwMoveMethod == SEEK_CUR)
   {
     m_currentReadPosition += llDistanceToMove;
   }
-  else // if (dwMoveMethod == FILE_BEGIN)
+  else // if (dwMoveMethod == SEEK_SET)
   {
     m_currentReadPosition = m_startPosition + llDistanceToMove;
   }
@@ -173,7 +173,7 @@ int64_t MultiFileReader::SetFilePointer(int64_t llDistanceToMove, unsigned long 
   }
 
   //  RefreshTSBufferFile();
-  return S_OK;
+  return true;
 }
 
 int64_t MultiFileReader::GetFilePointer()
@@ -182,7 +182,7 @@ int64_t MultiFileReader::GetFilePointer()
   return m_currentReadPosition;
 }
 
-long MultiFileReader::Read(unsigned char* pbData,
+bool MultiFileReader::Read(unsigned char* pbData,
                            unsigned long lDataLength,
                            unsigned long* dwReadBytes)
 {
@@ -190,7 +190,7 @@ long MultiFileReader::Read(unsigned char* pbData,
 
   // If the file has already been closed, don't continue
   if (m_TSBufferFile.IsFileInvalid())
-    return S_FALSE;
+    return false;
 
   RefreshTSBufferFile();
 
@@ -218,7 +218,7 @@ long MultiFileReader::Read(unsigned char* pbData,
   {
     kodi::Log(ADDON_LOG_ERROR, "MultiFileReader::no file");
     kodi::QueueNotification(QUEUE_ERROR, "", "No buffer file");
-    return S_FALSE;
+    return false;
   }
   if (m_currentReadPosition < (file->startPosition + file->length))
   {
@@ -242,7 +242,7 @@ long MultiFileReader::Read(unsigned char* pbData,
     int64_t posSeeked = m_TSFile.GetFilePointer();
     if (posSeeked != seekPosition)
     {
-      m_TSFile.SetFilePointer(seekPosition, FILE_BEGIN);
+      m_TSFile.SetFilePointer(seekPosition, SEEK_SET);
       posSeeked = m_TSFile.GetFilePointer();
       if (posSeeked != seekPosition)
       {
@@ -257,14 +257,14 @@ long MultiFileReader::Read(unsigned char* pbData,
     {
       // kodi::Log(ADDON_LOG_DEBUG, "%s: datalength %lu bytesToRead %lli.", __FUNCTION__, lDataLength, bytesToRead);
       hr = m_TSFile.Read(pbData, (unsigned long)bytesToRead, &bytesRead);
-      if (FAILED(hr))
+      if (!hr)
       {
         kodi::Log(ADDON_LOG_ERROR, "READ FAILED1");
       }
       m_currentReadPosition += bytesToRead;
 
       hr = this->Read(pbData + bytesToRead, lDataLength - (unsigned long)bytesToRead, dwReadBytes);
-      if (FAILED(hr))
+      if (!hr)
       {
         kodi::Log(ADDON_LOG_ERROR, "READ FAILED2");
       }
@@ -273,7 +273,7 @@ long MultiFileReader::Read(unsigned char* pbData,
     else
     {
       hr = m_TSFile.Read(pbData, lDataLength, dwReadBytes);
-      if (FAILED(hr))
+      if (!hr)
       {
         kodi::Log(ADDON_LOG_ERROR, "READ FAILED3");
       }
@@ -287,14 +287,14 @@ long MultiFileReader::Read(unsigned char* pbData,
   }
 
   // kodi::Log(ADDON_LOG_DEBUG, "%s: read %lu bytes. start %lli, current %lli, end %lli.", __FUNCTION__, *dwReadBytes, m_startPosition, m_currentPosition, m_endPosition);
-  return S_OK;
+  return true;
 }
 
 
-long MultiFileReader::RefreshTSBufferFile()
+bool MultiFileReader::RefreshTSBufferFile()
 {
   if (m_TSBufferFile.IsFileInvalid())
-    return S_FALSE;
+    return false;
 
   unsigned long bytesRead;
   MultiFileReaderFile* file;
@@ -306,7 +306,7 @@ long MultiFileReader::RefreshTSBufferFile()
   long Error = 0;
   long Loop = 10;
 
-  Wchar_t* pBuffer = nullptr;
+  wchar_t* pBuffer = nullptr;
   do
   {
     Error = 0;
@@ -327,17 +327,17 @@ long MultiFileReader::RefreshTSBufferFile()
       {
         kodi::Log(ADDON_LOG_DEBUG, "MultiFileReader::RefreshTSBufferFile() TSBufferFile too short");
       }
-      return S_FALSE;
+      return false;
     }
 
-    m_TSBufferFile.SetFilePointer(0, FILE_BEGIN);
+    m_TSBufferFile.SetFilePointer(0, SEEK_SET);
 
     uint32_t readLength = sizeof(currentPosition) + sizeof(filesAdded) + sizeof(filesRemoved);
     unsigned char* readBuffer = new unsigned char[readLength];
 
     result = m_TSBufferFile.Read(readBuffer, readLength, &bytesRead);
 
-    if (!SUCCEEDED(result) || bytesRead != readLength)
+    if (!result || bytesRead != readLength)
       Error |= 0x02;
 
     if (Error == 0)
@@ -360,10 +360,10 @@ long MultiFileReader::RefreshTSBufferFile()
     if (remainingLength > 100000)
       Error |= 0x10;
 
-    pBuffer = (Wchar_t*)new char[(unsigned int)remainingLength];
+    pBuffer = (wchar_t*)new char[(unsigned int)remainingLength];
 
     result = m_TSBufferFile.Read((unsigned char*)pBuffer, (uint32_t)remainingLength, &bytesRead);
-    if (!SUCCEEDED(result) || (int64_t)bytesRead != remainingLength)
+    if (!result || (int64_t)bytesRead != remainingLength)
       Error |= 0x20;
 
     readLength = sizeof(filesAdded) + sizeof(filesRemoved);
@@ -372,7 +372,7 @@ long MultiFileReader::RefreshTSBufferFile()
 
     result = m_TSBufferFile.Read(readBuffer, readLength, &bytesRead);
 
-    if (!SUCCEEDED(result) || bytesRead != readLength)
+    if (!result || bytesRead != readLength)
       Error |= 0x40;
 
     if (Error == 0)
@@ -416,7 +416,7 @@ long MultiFileReader::RefreshTSBufferFile()
     {
       kodi::Log(ADDON_LOG_ERROR, "MultiFileReader has failed for TSbuffer integrity. Error : %x",
                 Error);
-      return E_FAIL;
+      return false;
     }
   }
 
@@ -478,7 +478,7 @@ long MultiFileReader::RefreshTSBufferFile()
     // Create a list of files in the .tsbuffer file.
     std::vector<std::string> filenames;
 
-    Wchar_t* pwCurrFile = pBuffer; //Get a pointer to the first wchar filename string in pBuffer
+    wchar_t* pwCurrFile = pBuffer; //Get a pointer to the first wchar filename string in pBuffer
     long length = WcsLen(pwCurrFile);
 
     //kodi::Log(ADDON_LOG_DEBUG, "%s: WcsLen(%d), sizeof(wchar_t) == %d.", __FUNCTION__, length, sizeof(wchar_t));
@@ -606,10 +606,10 @@ long MultiFileReader::RefreshTSBufferFile()
     m_endPosition = 0;
   }
 
-  return S_OK;
+  return true;
 }
 
-long MultiFileReader::GetFileLength(const std::string& filename, int64_t& length)
+bool MultiFileReader::GetFileLength(const std::string& filename, int64_t& length)
 {
   length = 0;
   kodi::vfs::FileStatus stat;
@@ -617,11 +617,11 @@ long MultiFileReader::GetFileLength(const std::string& filename, int64_t& length
   {
     kodi::Log(ADDON_LOG_ERROR, "MultiFileReader::GetFileLength: can not get stat from file %s.",
               filename.c_str());
-    return S_FALSE;
+    return false;
   }
 
   length = stat.GetSize();
-  return S_OK;
+  return true;
 }
 
 int64_t MultiFileReader::GetFileSize()
@@ -632,7 +632,7 @@ int64_t MultiFileReader::GetFileSize()
 
 void MultiFileReader::OnZap(void)
 {
-  SetFilePointer(0, FILE_END);
+  SetFilePointer(0, SEEK_END);
   m_lastZapPosition = m_currentReadPosition;
 }
 } // namespace ArgusTV

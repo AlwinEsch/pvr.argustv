@@ -48,10 +48,10 @@ public:
   ~MultiFileReader() override = default;
 
   std::string GetFileName() const override;
-  long SetFileName(const std::string& fileName) override;
-  long OpenFile() override;
-  long CloseFile() override;
-  long Read(unsigned char* pbData, unsigned long lDataLength, unsigned long* dwReadBytes) override;
+  bool SetFileName(const std::string& fileName) override;
+  bool OpenFile() override;
+  bool CloseFile() override;
+  bool Read(unsigned char* pbData, unsigned long lDataLength, unsigned long* dwReadBytes) override;
   bool IsFileInvalid() override;
 
   int64_t SetFilePointer(int64_t llDistanceToMove, unsigned long dwMoveMethod) override;
@@ -60,8 +60,38 @@ public:
   void OnZap(void) override;
 
 protected:
-  long RefreshTSBufferFile();
-  long GetFileLength(const std::string& filename, int64_t& length);
+  bool RefreshTSBufferFile();
+  bool GetFileLength(const std::string& filename, int64_t& length);
+
+  /* This is a replacement of the Windows wcslen() function which assumes that
+   * wchar_t is a 2-byte character.
+   * It is used for processing Windows wchar strings
+   */
+  inline size_t WcsLen(const wchar_t *str)
+  {
+    const unsigned short *eos = (const unsigned short*)str;
+    while( *eos++ ) ;
+    return( (size_t)(eos - (const unsigned short*)str) -1);
+  };
+
+  /* This is a replacement of the Windows wcstombs() function which assumes that
+   * wchar_t is a 2-byte character.
+   * It is used for processing Windows wchar strings
+   */
+  inline size_t WcsToMbs(char *s, const wchar_t *w, size_t n)
+  {
+    size_t i = 0;
+    const unsigned short *wc = (const unsigned short*) w;
+    while(wc[i] && (i < n))
+    {
+      s[i] = wc[i];
+      ++i;
+    }
+    if (i < n) s[i] = '\0';
+
+    return (i);
+  };
+
 
   FileReader m_TSBufferFile;
   int64_t m_startPosition = 0;

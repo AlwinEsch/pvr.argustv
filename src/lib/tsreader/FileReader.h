@@ -27,8 +27,6 @@
 
 #include <kodi/Filesystem.h>
 
-#include "platform.h"
-
 namespace ArgusTV
 {
 class FileReader
@@ -39,10 +37,10 @@ public:
 
   // Open and write to the file
   virtual std::string GetFileName() const;
-  virtual long SetFileName(const std::string& fileName);
-  virtual long OpenFile();
-  virtual long CloseFile();
-  virtual long Read(unsigned char* pbData, unsigned long lDataLength, unsigned long* dwReadBytes);
+  virtual bool SetFileName(const std::string& fileName);
+  virtual bool OpenFile();
+  virtual bool CloseFile();
+  virtual bool Read(unsigned char* pbData, unsigned long lDataLength, unsigned long* dwReadBytes);
   virtual bool IsFileInvalid();
   virtual int64_t SetFilePointer(int64_t llDistanceToMove, unsigned long dwMoveMethod);
   virtual int64_t GetFilePointer();

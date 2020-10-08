@@ -24,6 +24,7 @@
 #include "utils.h"
 
 #include <kodi/General.h>
+#include <kodi/tools/StringUtils.h>
 
 template<typename T> void SafeDelete(T*& p)
 {
@@ -42,19 +43,14 @@ CTsReader::CTsReader()
 #endif
 }
 
-long CTsReader::Open(const std::string& fileName)
+bool CTsReader::Open(const std::string& fileName)
 {
   kodi::Log(ADDON_LOG_DEBUG, "CTsReader::Open(%s)", fileName.c_str());
 
   m_fileName = fileName;
-  char url[MAX_PATH];
-  strncpy(url, m_fileName.c_str(), MAX_PATH - 1);
-  url[MAX_PATH - 1] = '\0'; // make sure that we always have a 0-terminated string
 
   //check file type
-  int length = strlen(url);
-
-  if ((length < 9) || (strnicmp(&url[length - 9], ".tsbuffer", 9) != 0))
+  if (m_fileName.length() < 9 || !kodi::tools::StringUtils::EndsWithNoCase(m_fileName, ".tsbuffer"))
   {
     //local .ts file
     m_bTimeShifting = false;
@@ -70,22 +66,22 @@ long CTsReader::Open(const std::string& fileName)
   }
 
   //open file
-  if (m_fileReader->SetFileName(m_fileName.c_str()) != S_OK)
+  if (m_fileReader->SetFileName(m_fileName.c_str()) != true)
   {
     kodi::Log(ADDON_LOG_ERROR, "CTsReader::SetFileName failed.");
-    return S_FALSE;
+    return false;
   }
-  if (m_fileReader->OpenFile() != S_OK)
+  if (m_fileReader->OpenFile() != true)
   {
     kodi::Log(ADDON_LOG_ERROR, "CTsReader::OpenFile failed.");
-    return S_FALSE;
+    return false;
   }
-  m_fileReader->SetFilePointer(0LL, FILE_BEGIN);
+  m_fileReader->SetFilePointer(0LL, SEEK_SET);
 
-  return S_OK;
+  return true;
 }
 
-long CTsReader::Read(unsigned char* pbData, unsigned long lDataLength, unsigned long* dwReadBytes)
+bool CTsReader::Read(unsigned char* pbData, unsigned long lDataLength, unsigned long* dwReadBytes)
 {
 #if defined(TARGET_WINDOWS)
   LARGE_INTEGER liFrequency;
